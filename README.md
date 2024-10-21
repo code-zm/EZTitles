@@ -1,7 +1,3 @@
-2024-10-21 12:17
-
-Tags: [[projects]], [[programming]], [[Klipped]]
-
 # README.md
 
 ## EZTitles
