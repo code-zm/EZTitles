@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EZ Titles</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/static/bootstrap-5.3.3-dist/css/bootstrap.min.css">
+
+    <!-- Custom Font (Akira) -->
+    <style>
+        @font-face {
+            font-family: 'Akira';
+            src: url('/static/fonts/akira.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            background-color: #1e1e2f; /* Dark background */
+            color: #e0e0e0; /* Light gray text */
+            font-family: 'Arial', sans-serif; /* Clean body font */
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h1 {
+            color: #3498db; /* Blue for header */
+            font-family: 'Akira', sans-serif; /* Custom font for the title */
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .container {
+            max-width: 700px;
+            background-color: #2c2c3c; /* Slightly lighter background for content */
+            padding: 2rem;
+            border-radius: 10px; /* Rounded corners */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Subtle shadow for depth */
+        }
+
+        .form-label {
+            color: #bdbdbd; /* Softer text color */
+        }
+
+        .form-control {
+            background-color: #1e1e2f;
+            color: #e0e0e0;
+            border: 1px solid #3498db;
+        }
+
+        .btn-success {
+            background-color: #3498db; /* Blue for buttons */
+            border-color: #3498db;
+        }
+
+        .btn-success:hover {
+            background-color: #2980b9; /* Darker blue on hover */
+            border-color: #2980b9;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            border-color: #3498db;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #555;
+            border-color: #555;
+        }
+
+        .btn-secondary:hover {
+            background-color: #444;
+            border-color: #444;
+        }
+
+        .card {
+            background-color: #2c2c3c; /* Same as container */
+            border: none;
+            color: #e0e0e0;
+        }
+
+        .card-header {
+            font-weight: bold;
+            color: #e0e0e0;
+            background-color: #1e1e2f;
+            border-bottom: 1px solid #3498db;
+        }
+
+        .card-body textarea {
+            background-color: #1e1e2f;
+            color: #e0e0e0;
+            border: 1px solid #3498db;
+            border-radius: 5px;
+        }
+
+        .card-footer button {
+            background-color: #3498db;
+            border-color: #3498db;
+        }
+
+        .card-footer button:disabled {
+            background-color: #555;
+            border-color: #555;
+        }
+
+        .loading {
+            display: none;
+            color: #3498db;
+            font-size: 1.5rem;
+        }
+
+        .loading-animation {
+            display: none;
+            border: 5px solid #f3f3f3; /* Light gray */
+            border-top: 5px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container text-center">
+    <h1>EZ Titles</h1>
+
+    <!-- Form to upload video file and transcribe -->
+    <div class="card">
+        <div class="card-body">
+            <form id="transcription-form" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="video" class="form-label">Select MP4 file:</label>
+                    <input type="file" class="form-control" id="video" name="video" accept=".mp4" required>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="tts-checkbox" name="generate_tts">
+                    <label class="form-check-label" for="tts-checkbox">Generate Text-to-Speech (TTS) Audio</label>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Generate Subtitles</button>
+                <div id="loading-text" class="loading mt-3">Processing... Please wait.</div>
+                <div id="loading-animation" class="loading-animation"></div>
+            </form>
+
+            <!-- Transcription Status -->
+            <div id="transcription-status" class="alert alert-info mt-3" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Audio player for the extracted audio -->
+    <div class="card mt-4" id="audio-player-container" style="display: none;">
+        <div class="card-header">
+            Extracted Audio
+        </div>
+        <div class="card-body">
+            <audio id="audio-player" controls class="w-100">
+                <source id="audio-source" src="/audio" type="audio/wav">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+    </div>
+
+    <!-- Textarea for editing transcription -->
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Edit Transcription</span>
+            <div class="btn-group" role="group" aria-label="Subtitle Options">
+                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Font
+                </button>
+                <ul class="dropdown-menu">
+                    <li><label class="dropdown-item">Font:
+                        <select id="font-select" class="form-select">
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Tahoma">Tahoma</option>
+                            <option value="Helvetica">Helvetica</option>
+                        </select>
+                    </label></li>
+                </ul>
+
+                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Size
+                </button>
+                <ul class="dropdown-menu">
+                    <li><label class="dropdown-item">Font Size:
+                        <input type="number" id="font-size" class="form-control" value="24" min="10" max="100">
+                    </label></li>
+                </ul>
+
+                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Color
+                </button>
+                <ul class="dropdown-menu">
+                    <li><label class="dropdown-item">Font Color:
+                        <input type="color" id="font-color" class="form-control" value="#ffffff">
+                    </label></li>
+                </ul>
+
+                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Words per Subtitle
+                </button>
+                <ul class="dropdown-menu">
+                    <li><label class="dropdown-item">Number of words per subtitle:
+                        <input type="number" id="word-count" class="form-control" value="5" min="1" max="15">
+                    </label></li>
+                </ul>
+
+                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Position
+                </button>
+                <ul class="dropdown-menu">
+                    <li><label class="dropdown-item">Subtitle Position:
+                        <select id="subtitle-position" class="form-select">
+                            <option value="bottom">Bottom</option>
+                            <option value="middle">Middle</option>
+                            <option value="top">Top</option>
+                        </select>
+                    </label></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            <textarea id="transcription-text" class="form-control" rows="10" placeholder="Transcription will appear here..."></textarea>
+        </div>
+        <div class="card-footer">
+            <button type="button" id="align-button" class="btn btn-primary w-100" disabled>Align Subtitles</button>
+        </div>
+    </div>
+
+    <!-- Download video button -->
+    <div class="card mt-4" id="download-container" style="display: none;">
+        <div class="card-body">
+            <button id="download-button" class="btn btn-primary w-100">Download Video</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Bundle JS (includes Popper) -->
+<script src="/static/bootstrap-5.3.3-dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- JavaScript for AJAX Form Submission -->
+<script>
+    // Handle transcription form submission
+    document.getElementById('transcription-form').addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent the form from submitting normally
+
+        const formData = new FormData(this);
+        const ttsCheckbox = document.getElementById('tts-checkbox').checked;
+        formData.append('generate_tts', ttsCheckbox); // Append the TTS checkbox value
+
+        document.getElementById('loading-text').style.display = 'block'; // Show loading text
+        document.getElementById('loading-animation').style.display = 'block'; // Show loading animation
+
+        fetch('/transcribe', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading-text').style.display = 'none'; // Hide loading text
+            document.getElementById('loading-animation').style.display = 'none'; // Hide loading animation
+            if (data.status === "Transcription complete") {
+                // Update the transcription textarea with the result
+                document.getElementById('transcription-text').value = data.transcription;
+                document.getElementById('align-button').disabled = false; // Enable the align button
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(error => {
+            document.getElementById('loading-text').style.display = 'none'; // Hide loading text
+            document.getElementById('loading-animation').style.display = 'none'; // Hide loading animation
+            console.error('Error:', error);
+        });
+    });
+
+    // Handle alignment button click
+    document.getElementById('align-button').addEventListener('click', function() {
+        const transcriptionText = document.getElementById('transcription-text').value;
+        const wordCount = document.getElementById('word-count').value; // Get the user-defined word count
+        const font = document.getElementById('font-select').value; // Get the selected font
+        const fontSize = document.getElementById('font-size').value; // Get the font size
+        const fontColor = document.getElementById('font-color').value; // Get the font color
+        const subtitlePosition = document.getElementById('subtitle-position').value; // Get the subtitle position
+        const generateTts = document.getElementById('tts-checkbox').checked; // Get the TTS checkbox value
+
+        if (!transcriptionText) {
+            alert("Please provide a transcription before alignment.");
+            return;
+        }
+
+        document.getElementById('loading-text').style.display = 'block'; // Show loading text
+        document.getElementById('loading-animation').style.display = 'block'; // Show loading animation
+
+        // Send transcription and subtitle settings to /align endpoint
+        fetch('/align', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                transcription: transcriptionText,
+                word_count: wordCount,
+                font: font,
+                font_size: fontSize,
+                font_color: fontColor,
+                subtitle_position: subtitlePosition,
+                generate_tts: generateTts
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading-text').style.display = 'none'; // Hide loading text
+            document.getElementById('loading-animation').style.display = 'none'; // Hide loading animation
+            if (data.status) {
+                alert(data.status);
+                document.getElementById('download-container').style.display = 'block'; // Show the download button
+            } else if (data.error) {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(error => {
+            document.getElementById('loading-text').style.display = 'none'; // Hide loading text
+            document.getElementById('loading-animation').style.display = 'none'; // Hide loading animation
+            console.error('Error during alignment:', error);
+            alert("An error occurred during alignment.");
+        });
+    });
+
+    // Handle download button click
+    document.getElementById('download-button').addEventListener('click', function() {
+        window.location.href = '/download';
+    });
+</script>
+
+</body>
+</html>
+
