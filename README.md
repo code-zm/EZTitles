@@ -2,7 +2,7 @@
 
 ## EZTitles
 
-EZ Titles is a Flask-based web application that allows users to automatically add aligned subtitles to videos with custom styling options. With this tool, you can upload videos, extract and transcribe audio, fine-tune subtitle appearance, and download the final video with embedded subtitles.
+EZ Titles is a Flask-based web application that allows users to automate the process of applying subtitles to a video.
 
 #### Features:
 - Video Upload: Upload videos directly from your local system.
