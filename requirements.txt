@@ -2,3 +2,4 @@ Flask
 requests
 ffmpeg-python
 openai-whisper
+soundfile
